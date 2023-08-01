@@ -1,0 +1,24 @@
+{
+  "name": "Service-Protocol-Compressed-NFT",
+  "version": "1.0.0",
+  "description": "A Service Protocol to abstract away merkle tree usage",
+  "main": "index.js",
+  "repository": "git@github.com:thearyanag/Service-Protocol-Compressed-NFT.git",
+  "author": "aryan",
+  "license": "MIT",
+  "dependencies": {
+    "@metaplex-foundation/mpl-bubblegum": "^0.7.0",
+    "@metaplex-foundation/mpl-token-metadata": "^2.13.0",
+    "@solana/spl-account-compression": "^0.1.10",
+    "@solana/web3.js": "^1.78.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.1",
+    "nodemon": "^3.0.1",
+    "sequelize": "^6.32.1"
+  },
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  }
+}
