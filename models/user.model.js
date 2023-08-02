@@ -1,14 +1,15 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { DataTypes } = require("sequelize");
+const client = require("../client/db");
 
 /**
  * A model to store info regarding the users
-*/
+ */
 
-const user = Sequelize.define("user", {
-    address : {
-        type: DataTypes.STRING,
-        primaryKey: true,
-    },
+const user = client.define("user", {
+  address: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
 });
 
-module.exports = user;
+module.exports = { user };

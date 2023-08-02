@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgres://serviceprotocol:Aa@123456@localhost:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL
 
 module.exports = new Sequelize(DATABASE_URL, {
     dialect: 'postgres',
@@ -11,4 +11,6 @@ module.exports = new Sequelize(DATABASE_URL, {
             rejectUnauthorized: false,
         },
     },
+    ssl : false,
+    logging: false,
 });
