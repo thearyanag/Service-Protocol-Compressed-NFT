@@ -10,6 +10,27 @@ const user = client.define("user", {
     type: DataTypes.STRING,
     primaryKey: true,
   },
+  basic : {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  developer : {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  startup : {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  enterprise : {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  credits : {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
 });
 
 module.exports = { user };
+    

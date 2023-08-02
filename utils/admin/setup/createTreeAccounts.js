@@ -18,7 +18,7 @@ const {
 
 const { tree } = require("../../../models");
 
-const { connection , wallet } = require("../../../client/web3");
+const { connection, wallet } = require("../../../client/web3");
 
 // CONSTANTS FOR TREE CREATION
 // 20,64,14 = free tier
@@ -38,40 +38,38 @@ const canopyDepth = [14, 15, 15, 16];
  */
 
 async function createTreeAccounts() {
-
   try {
+    // Generate the keypair for merkle tree accounts and store them in databaseß
+    let merkleTreeAccounts = [];
 
-  // Generate the keypair for merkle tree accounts and store them in databaseß
-  let merkleTreeAccounts = [];
+    for (let i = 0; i < 4; i++) {
+      merkleTreeAccounts.push(Keypair.generate());
 
-  for (let i = 0; i < 4; i++) {
-    merkleTreeAccounts.push(Keypair.generate());
+      await tree.create({
+        id: i,
+        depth: maxDepth[i],
+        buffer_size: maxBufferSize[i],
+        canopy: canopyDepth[i],
+        public_key: merkleTreeAccounts[i].publicKey.toString(),
+        private_key: merkleTreeAccounts[i].secretKey.toString(),
+      });
+    }
 
-    await tree.create({
-      id: i,
-      depth: maxDepth[i],
-      buffer_size: maxBufferSize[i],
-      canopy: canopyDepth[i],
-      public_key: merkleTreeAccounts[i].publicKey.toString(),
-      private_key: merkleTreeAccounts[i].secretKey.toString(),
-    });
-  }
+    // Get the PDA using the BUBBLEGUM_PROGRAM_ID
+    let merkleTreeAuthority = [];
 
-  // Get the PDA using the BUBBLEGUM_PROGRAM_ID
-  let merkleTreeAuthority = [];
+    for (let i = 0; i < 4; i++) {
+      merkleTreeAuthority.push(
+        PublicKey.findProgramAddressSync(
+          [merkleTreeAccounts[i].publicKey.toBuffer()],
+          BUBBLEGUM_PROGRAM_ID
+        )[0]
+      );
+    }
 
-  for (let i = 0; i < 4; i++) {
-    merkleTreeAuthority.push(
-      PublicKey.findProgramAddressSync(
-        [merkleTreeAccounts[i].publicKey.toBuffer()],
-        BUBBLEGUM_PROGRAM_ID
-      )[0]
-    );
-  }
+    // create the instruction for allocating space for the merkle trees
+    let createAllocTreeIxArray = [];
 
-  // create the instruction for allocating space for the merkle trees
-  let createAllocTreeIxArray = [];
-  
     for (let i = 0; i < 4; i++) {
       createAllocTreeIxArray.push(
         await createAllocTreeIx(
@@ -89,7 +87,7 @@ async function createTreeAccounts() {
 
     // create the instruction for actually creating the merkle tree accounts
     let createCreateTreeInstructionArray = [];
-  
+
     for (let i = 0; i < 4; i++) {
       createCreateTreeInstructionArray.push(
         createCreateTreeInstruction(
@@ -117,7 +115,7 @@ async function createTreeAccounts() {
         .add(createAllocTreeIxArray[i])
         .add(createCreateTreeInstructionArray[i]);
       tx.feePayer = wallet.publicKey;
-  
+
       let txSig = await sendAndConfirmTransaction(
         connection,
         tx,
@@ -127,15 +125,12 @@ async function createTreeAccounts() {
           skipPreflight: true,
         }
       );
-  
+
       console.log(txSig);
     }
-
-
   } catch (err) {
     console.log(err);
   }
-
 }
 
 module.exports = { createTreeAccounts };
