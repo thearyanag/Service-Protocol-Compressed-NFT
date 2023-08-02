@@ -10,7 +10,7 @@ const {
   createCreateTreeInstruction,
 } = require("@metaplex-foundation/mpl-bubblegum");
 const {
-  LAMPORTS_PER_SOL,
+  Keypair,
   PublicKey,
   Transaction,
   sendAndConfirmTransaction,
@@ -77,7 +77,7 @@ async function createTreeAccounts() {
         await createAllocTreeIx(
           connection,
           merkleTreeAccounts[i].publicKey,
-          payer.publicKey,
+          wallet.publicKey,
           {
             maxDepth: maxDepth[i],
             maxBufferSize: maxBufferSize[i],
@@ -94,8 +94,8 @@ async function createTreeAccounts() {
       createCreateTreeInstructionArray.push(
         createCreateTreeInstruction(
           {
-            payer: payer.publicKey,
-            treeCreator: payer.publicKey,
+            payer: wallet.publicKey,
+            treeCreator: wallet.publicKey,
             treeAuthority: merkleTreeAuthority[i],
             merkleTree: merkleTreeAccounts[i].publicKey,
             compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
@@ -112,16 +112,16 @@ async function createTreeAccounts() {
     }
 
     // Build and send the transaction
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 4; i++) {
       const tx = new Transaction()
         .add(createAllocTreeIxArray[i])
         .add(createCreateTreeInstructionArray[i]);
-      tx.feePayer = payer.publicKey;
+      tx.feePayer = wallet.publicKey;
   
       let txSig = await sendAndConfirmTransaction(
         connection,
         tx,
-        [merkleTreeAccounts[i], payer],
+        [merkleTreeAccounts[i], wallet],
         {
           commitment: "confirmed",
           skipPreflight: true,
