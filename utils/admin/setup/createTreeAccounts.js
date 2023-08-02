@@ -10,15 +10,15 @@ const {
   createCreateTreeInstruction,
 } = require("@metaplex-foundation/mpl-bubblegum");
 const {
-  Connection,
   LAMPORTS_PER_SOL,
-  Keypair,
   PublicKey,
   Transaction,
   sendAndConfirmTransaction,
 } = require("@solana/web3.js");
 
 const { tree } = require("../../../models");
+
+const { connection , wallet } = require("../../../client/web3");
 
 // CONSTANTS FOR TREE CREATION
 // 20,64,14 = free tier
@@ -38,6 +38,9 @@ const canopyDepth = [14, 15, 15, 16];
  */
 
 async function createTreeAccounts() {
+
+  try {
+
   // Generate the keypair for merkle tree accounts and store them in databaseß
   let merkleTreeAccounts = [];
 
@@ -45,7 +48,7 @@ async function createTreeAccounts() {
     merkleTreeAccounts.push(Keypair.generate());
 
     await tree.create({
-      id : i,
+      id: i,
       depth: maxDepth[i],
       buffer_size: maxBufferSize[i],
       canopy: canopyDepth[i],
@@ -53,6 +56,86 @@ async function createTreeAccounts() {
       private_key: merkleTreeAccounts[i].secretKey.toString(),
     });
   }
+
+  // Get the PDA using the BUBBLEGUM_PROGRAM_ID
+  let merkleTreeAuthority = [];
+
+  for (let i = 0; i < 4; i++) {
+    merkleTreeAuthority.push(
+      PublicKey.findProgramAddressSync(
+        [merkleTreeAccounts[i].publicKey.toBuffer()],
+        BUBBLEGUM_PROGRAM_ID
+      )[0]
+    );
+  }
+
+  // create the instruction for allocating space for the merkle trees
+  let createAllocTreeIxArray = [];
+  
+    for (let i = 0; i < 4; i++) {
+      createAllocTreeIxArray.push(
+        await createAllocTreeIx(
+          connection,
+          merkleTreeAccounts[i].publicKey,
+          payer.publicKey,
+          {
+            maxDepth: maxDepth[i],
+            maxBufferSize: maxBufferSize[i],
+          },
+          canopyDepth[i]
+        )
+      );
+    }
+
+    // create the instruction for actually creating the merkle tree accounts
+    let createCreateTreeInstructionArray = [];
+  
+    for (let i = 0; i < 4; i++) {
+      createCreateTreeInstructionArray.push(
+        createCreateTreeInstruction(
+          {
+            payer: payer.publicKey,
+            treeCreator: payer.publicKey,
+            treeAuthority: merkleTreeAuthority[i],
+            merkleTree: merkleTreeAccounts[i].publicKey,
+            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+            logWrapper: SPL_NOOP_PROGRAM_ID,
+          },
+          {
+            maxBufferSize: maxBufferSize[i],
+            maxDepth: maxDepth[i],
+            public: false,
+          },
+          BUBBLEGUM_PROGRAM_ID
+        )
+      );
+    }
+
+    // Build and send the transaction
+    for (let i = 0; i < 1; i++) {
+      const tx = new Transaction()
+        .add(createAllocTreeIxArray[i])
+        .add(createCreateTreeInstructionArray[i]);
+      tx.feePayer = payer.publicKey;
+  
+      let txSig = await sendAndConfirmTransaction(
+        connection,
+        tx,
+        [merkleTreeAccounts[i], payer],
+        {
+          commitment: "confirmed",
+          skipPreflight: true,
+        }
+      );
+  
+      console.log(txSig);
+    }
+
+
+  } catch (err) {
+    console.log(err);
+  }
+
 }
 
 module.exports = { createTreeAccounts };
