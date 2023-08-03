@@ -1,9 +1,17 @@
 const userRouter = require("express").Router();
 const { user: User } = require("../models");
 const auth = require("../middleware/auth");
+const { generateAPIKey } = require("../utils/user/login");
 
 userRouter.get("/login", async (req, res) => {
   let { address } = req.body;
+
+  if (!address) {
+    res.status(400).send({
+      message: "Please provide an address",
+    });
+    return;
+  }
 
   let userExists = await User.findOne({
     where: {
@@ -14,19 +22,22 @@ userRouter.get("/login", async (req, res) => {
   if (userExists) {
     res.status(200).send({
       message: "User exists",
+      token: generateAPIKey(address),
     });
+    return;
   } else {
+    await User.create({
+      address: address,
+    });
     res.status(400).send({
-      message: "User does not exist",
+      message: "New user created",
+      token: generateAPIKey(address),
     });
   }
-  await User.create({
-    address: address,
-  });
 });
 
 userRouter.post("/subscribe", auth, async (req, res) => {
-  let address = req.user.address;
+  let address = req.address;
   let { tier } = req.body;
 
   let user = await User.findOne({
@@ -39,6 +50,7 @@ userRouter.post("/subscribe", auth, async (req, res) => {
     res.status(400).send({
       message: "Please provide a tier",
     });
+    return;
   }
 
   if (tier == 1) {
@@ -50,13 +62,22 @@ userRouter.post("/subscribe", auth, async (req, res) => {
   }
   await user.save();
 
+  if(tier == -1) {
+    user.developer = false;
+  } else if (tier == -2) {
+    user.startup = false;
+  } else if (tier == -3) {
+    user.enterprise = false;
+  }
+  await user.save();
+
   res.status(200).send({
-    message: "User subscribed",
+    message: tier == -1 ? "Unsubscribed from developer tier" : tier == -2 ? "Unsubscribed from startup tier" : tier == -3 ? "Unsubscribed from enterprise tier" : tier == 1 ? "Subscribed to developer tier" : tier == 2 ? "Subscribed to startup tier" : tier == 3 ? "Subscribed to enterprise tier" : "Something went wrong",
   });
 });
 
 userRouter.get("/", auth, async (req, res) => {
-  let address = req.user.address;
+  let address = req.address;
 
   let user = await User.findOne({
     where: {
@@ -64,15 +85,15 @@ userRouter.get("/", auth, async (req, res) => {
     },
   });
 
-  user = {
+  res.status(200).send({
     address: user.address,
     developer: user.developer,
     startup: user.startup,
     enterprise: user.enterprise,
     credits: user.credits,
-  };
-
-  res.status(200).send({
-    user: user,
   });
 });
+
+module.exports = userRouter;
+// NOTE https://replit.com/@mcintyre94/sign-partial-sign#index.js
+// https://solana.stackexchange.com/questions/542/what-is-the-difference-between-signing-and-partial-signing-a-transaction
