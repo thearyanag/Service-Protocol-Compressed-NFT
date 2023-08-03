@@ -1,15 +1,21 @@
 const treeRouter = require("express").Router();
+const { tree } = require("../models");
+const { user : User } = require("../models");
 
 treeRouter.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-module.exports = treeRouter;
-
 treeRouter.post("/add", async (req, res) => {
-  let address = req.user.address;
+  let address = req.address;
 
   let { tier, metadata, owner, collection } = req.body;
+
+  // collection = 
+  // collectionMint,
+  // collectionMetadata,
+  // editionAccount,
+
 
   if (!tier) tier = 0;
   if (!owner) owner = address;
@@ -62,6 +68,6 @@ treeRouter.post("/add", async (req, res) => {
       id: tier,
     },
   });
-
-  
 });
+
+module.exports = treeRouter;

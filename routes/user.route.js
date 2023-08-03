@@ -62,7 +62,7 @@ userRouter.post("/subscribe", auth, async (req, res) => {
   }
   await user.save();
 
-  if(tier == -1) {
+  if (tier == -1) {
     user.developer = false;
   } else if (tier == -2) {
     user.startup = false;
@@ -72,7 +72,20 @@ userRouter.post("/subscribe", auth, async (req, res) => {
   await user.save();
 
   res.status(200).send({
-    message: tier == -1 ? "Unsubscribed from developer tier" : tier == -2 ? "Unsubscribed from startup tier" : tier == -3 ? "Unsubscribed from enterprise tier" : tier == 1 ? "Subscribed to developer tier" : tier == 2 ? "Subscribed to startup tier" : tier == 3 ? "Subscribed to enterprise tier" : "Something went wrong",
+    message:
+      tier == -1
+        ? "Unsubscribed from developer tier"
+        : tier == -2
+        ? "Unsubscribed from startup tier"
+        : tier == -3
+        ? "Unsubscribed from enterprise tier"
+        : tier == 1
+        ? "Subscribed to developer tier"
+        : tier == 2
+        ? "Subscribed to startup tier"
+        : tier == 3
+        ? "Subscribed to enterprise tier"
+        : "Something went wrong",
   });
 });
 
@@ -91,6 +104,41 @@ userRouter.get("/", auth, async (req, res) => {
     startup: user.startup,
     enterprise: user.enterprise,
     credits: user.credits,
+  });
+});
+
+userRouter.post("/withdraw", auth, async (req, res) => {
+  let address = req.address;
+
+  let user = await User.findOne({
+    where: {
+      address: address,
+    },
+  });
+
+  let { amount } = req.body;
+
+  if (!amount) {
+    res.status(400).send({
+      message: "Please provide the amount of credits to withdraw",
+    });
+    return;
+  }
+
+  if (user.credits < amount) {
+    res.status(400).send({
+      message:
+        "You do not have enough credits to withdraw , use /api/user to check your balance",
+    });
+    return;
+  }
+
+  user.credits -= amount;
+
+  await user.save();
+
+  res.status(200).send({
+    message: "Successfully withdrew credits",
   });
 });
 

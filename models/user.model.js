@@ -27,7 +27,7 @@ const user = client.define("user", {
     defaultValue: false,
   },
   credits : {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
 });
