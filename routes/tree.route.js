@@ -1,6 +1,9 @@
 const treeRouter = require("express").Router();
+const { Keypair } = require("@solana/web3.js");
 const { tree } = require("../models");
-const { user : User } = require("../models");
+const bs58 = require("bs58");
+const { user: User } = require("../models");
+const { addNFTToTree } = require("../utils/tree/add");
 
 treeRouter.get("/", (req, res) => {
   res.send("Hello World!");
@@ -11,11 +14,10 @@ treeRouter.post("/add", async (req, res) => {
 
   let { tier, metadata, owner, collection } = req.body;
 
-  // collection = 
+  // collection =
   // collectionMint,
   // collectionMetadata,
   // editionAccount,
-
 
   if (!tier) tier = 0;
   if (!owner) owner = address;
@@ -29,7 +31,7 @@ treeRouter.post("/add", async (req, res) => {
 
   if (!collection) {
     res.status(400).send({
-      message: "Please provide collection",
+      message: "Please provide a valid collection data",
     });
     return;
   }
@@ -43,21 +45,21 @@ treeRouter.post("/add", async (req, res) => {
   if (tier == 1) {
     if (!user.developer) {
       res.status(400).send({
-        message: "User not subscribed to tier",
+        message: "User not subscribed to the tier",
       });
       return;
     }
   } else if (tier == 2) {
     if (!user.startup) {
       res.status(400).send({
-        message: "User not subscribed to tier",
+        message: "User not subscribed to the tier",
       });
       return;
     }
   } else if (tier == 3) {
     if (!user.enterprise) {
       res.status(400).send({
-        message: "User not subscribed to tier",
+        message: "User not subscribed to the tier",
       });
       return;
     }
@@ -68,6 +70,14 @@ treeRouter.post("/add", async (req, res) => {
       id: tier,
     },
   });
+
+  let secret = treeAccount.private_key;
+  let buffer = Buffer.from(secret.split(','))
+  let treeKeypair = Keypair.fromSecretKey(buffer)
+
+  addNFTToTree(treeKeypair, metadata, collection)
+
 });
+
 
 module.exports = treeRouter;
