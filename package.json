@@ -7,6 +7,7 @@
   "author": "aryan",
   "license": "MIT",
   "dependencies": {
+    "@metaplex-foundation/js": "^0.19.4",
     "@metaplex-foundation/mpl-bubblegum": "^0.7.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.13.0",
     "@solana/spl-account-compression": "^0.1.10",

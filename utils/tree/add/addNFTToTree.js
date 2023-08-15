@@ -13,13 +13,18 @@ const {
 } = require("@metaplex-foundation/mpl-token-metadata");
 
 const { connection, wallet } = require("../../../client/web3");
-let { Keypair, Transaction } = require("@solana/web3.js");
+let { Keypair, Transaction, PublicKey } = require("@solana/web3.js");
 
 const addNFTToTree = async (keypair, owner, metadata, collection) => {
-  console.log(await connection.getRecentBlockhash());
+  owner = new PublicKey(owner);
 
-  let treeAddress = keypair.publicKey.toBase58();
-  console.log(treeAddress);
+  let treeAddress = keypair.publicKey;
+
+  collection = {
+    collectionAuthority: new PublicKey(collection.collectionAuthority),
+    collectionMint: new PublicKey(collection.collectionMint),
+    collectionMetadata: new PublicKey(collection.collectionMetadata),
+  };
 
   const [treeAuthority, _bump] = PublicKey.findProgramAddressSync(
     [treeAddress.toBuffer()],
@@ -30,6 +35,12 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
     [Buffer.from("collection_cpi", "utf8")],
     BUBBLEGUM_PROGRAM_ID
   );
+
+  metadata = {
+    ...metadata,
+    tokenProgramVersion: TokenProgramVersion.Original,
+    tokenStandard: TokenStandard.NonFungible,
+  };
 
   const compressedMintIx = createMintToCollectionV1Instruction(
     {
@@ -45,6 +56,7 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
       collectionAuthorityRecordPda: BUBBLEGUM_PROGRAM_ID,
       collectionMint: collection.collectionMint,
       collectionMetadata: collection.collectionMetadata,
+      editionAccount: collection.editionAccount,
 
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       logWrapper: SPL_NOOP_PROGRAM_ID,
@@ -52,9 +64,9 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
     },
     {
-      metadataArgs: Object.assign(compressedNFTMetadata, {
+      metadataArgs: Object.assign(metadata, {
         collection: {
-          key: collectionMint,
+          key: collection.collectionMint,
           verified: false,
         },
       }),
@@ -69,7 +81,15 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
 
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
 
-  tx.sign(wallet);
+  console.log(wallet.publicKey)
+
+  tx.partialSign(wallet);
+
+  console.log(
+    tx.serialize({
+      requireAllSignatures: false,
+    })
+  );
 };
 
 module.exports = { addNFTToTree };
