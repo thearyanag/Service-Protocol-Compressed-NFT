@@ -24,6 +24,7 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
     collectionAuthority: new PublicKey(collection.collectionAuthority),
     collectionMint: new PublicKey(collection.collectionMint),
     collectionMetadata: new PublicKey(collection.collectionMetadata),
+    editionAccount: new PublicKey(collection.editionAccount),
   };
 
   const [treeAuthority, _bump] = PublicKey.findProgramAddressSync(
@@ -74,22 +75,14 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
   );
 
   const tx = new Transaction();
-
   tx.add(compressedMintIx);
-
   tx.feePayer = wallet.publicKey;
-
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-
-  console.log(wallet.publicKey)
-
   tx.partialSign(wallet);
 
-  console.log(
-    tx.serialize({
-      requireAllSignatures: false,
-    })
-  );
+  return tx.serialize({
+    requireAllSignatures: false,
+  }).toString("base64")
 };
 
 module.exports = { addNFTToTree };

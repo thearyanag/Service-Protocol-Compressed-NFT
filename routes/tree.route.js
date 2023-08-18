@@ -16,12 +16,6 @@ treeRouter.post("/add", async (req, res) => {
 
   if (!owner) owner = address;
 
-  // collection =
-  // collectionMint,
-  // collectionMetadata,
-  // collectionAuthority
-  // editionAccount,
-
   if (!tier) tier = 0;
   if (!owner) owner = address;
 
@@ -78,7 +72,11 @@ treeRouter.post("/add", async (req, res) => {
   let buffer = Buffer.from(secret.split(","));
   let treeKeypair = Keypair.fromSecretKey(buffer);
 
-  addNFTToTree(treeKeypair, owner, metadata, collection);
+  let txBuffer = await addNFTToTree(treeKeypair, owner, metadata, collection);
+
+  res.send({
+    txBuffer 
+  });
 });
 
 module.exports = treeRouter;
