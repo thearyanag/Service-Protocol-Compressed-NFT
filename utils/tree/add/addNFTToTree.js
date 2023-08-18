@@ -78,7 +78,8 @@ const addNFTToTree = async (keypair, owner, metadata, collection) => {
   tx.add(compressedMintIx);
   tx.feePayer = wallet.publicKey;
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-  tx.partialSign(wallet);
+
+  tx.sign(wallet);
 
   return tx.serialize({
     requireAllSignatures: false,
